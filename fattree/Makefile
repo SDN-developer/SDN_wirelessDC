@@ -1,4 +1,4 @@
-all: constructor controller readInput install start rule getFunction wired legalAddr cumulate pathInit vecdot vecdis wirelessSP wireless updateTCAM modCap recrdPrev blockFlow resumeFlow hops begTransmission endTransmission isTCAMfull
+all: constructor controller readInput install start rule getFunction wired legalAddr cumulate vecdot vecdis wirelessSP wireless updateTCAM hops begTransmission endTransmission isTCAMfull modifyCap
 
 constructor:
 	g++ -c constructor.cpp
@@ -30,9 +30,6 @@ legalAddr:
 cumulate:
 	g++ -c cumulate.cpp
 
-pathInit:
-	g++ -c pathInit.cpp
-
 vecdot:
 	g++ -c vecdot.cpp
 
@@ -48,18 +45,6 @@ wireless:
 updateTCAM:
 	g++ -c updateTCAM.cpp
 
-modCap:
-	g++ -c modCap.cpp
-
-recrdPrev:
-	g++ -c recrdPrev.cpp
-
-blockFlow:
-	g++ -c blockFlow.cpp
-
-resumeFlow:
-	g++ -c resumeFlow.cpp
-
 hops:
 	g++ -c hops.cpp
 
@@ -71,3 +56,6 @@ endTransmission:
 
 isTCAMfull:
 	g++ -c isTCAMfull.cpp
+
+modifyCap:
+	g++ -c modifyCap.cpp

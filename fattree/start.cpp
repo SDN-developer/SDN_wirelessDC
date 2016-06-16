@@ -10,21 +10,18 @@
 #include "../fattree/fattree.h"
 #include "../event/event.h"
 #include "../event/eventType.h"
+#include "../entry/entry.h"
 
 // Start simulation
 void Fattree::start(void){
 
 	// Until all event finished
-	int sid, arrive;
-	double ts;
-	Event evt, next;
-	PrevHop ph;
-	map<int,PrevHop>::iterator itr;
-	pair<Event,Event>pr;
-
+	int arrive;
 	int curTimeStamp;
 	int compTimeStamp;
 	Packet pkt;
+	Event evt, next;
+	vector<Entry>vent;
 
 	// Statistic information
 	int prevPerCent = -1, perCent;
@@ -99,11 +96,18 @@ void Fattree::start(void){
 			case EVENT_DONE:
 //printf("[%6.1lf] %d flows arrives\n", evt.getTimeStamp(), arrive);
 				
-				// TODO: release capacity for this flow along the path
+				// Release capacity for this flow along the path
+				pkt = evt.getPacket();
+				vent = allEntry[ rcdFlowID[pkt] ];
+				modifyCap(vent, pkt.getDataRate(), vent[0].isWireless());
 
 				// End transmission: 
 				// Change active rule to inactive if all flows of current header is done
 				endTransmission(evt.getTimeStamp(), evt.getPacket());
+
+				// Update number of wired/wireless path
+				if(vent[0].isWireless()) numberOfWirelessFlow++;
+				else numberOfWiredFlow++;
 
 				// Percentage
 				arrive ++;

@@ -26,4 +26,7 @@
 
 /**** Packet size (byte) ****/
 #define PKT_SIZE 1500
+
+/******** Other ********/
+#define INF (int)1e9
 #endif

@@ -5,7 +5,6 @@
 #include "../event/event.h"
 #include "../switch/switch.h"
 #include "../packet/packet.h"
-#include "../prevhop.h"
 
 // Fat Tree class
 #ifndef FATTREE_H
@@ -35,16 +34,13 @@ class Fattree{
 		int numberOfAggregate;			// Number of aggregate switches
 		int numberOfEdge;				// Number of edge switches
 		int numberOfHost;				// Number of hosts
-		int maxEntry;					// Maximum number of TCAM entries
 		int flowIDCount;				// Current flow ID count
-		double compAvail;				// Controller available time (not used)
 		Node **node;					// All nodes
 		Switch **sw;					// All switches
 		priority_queue<Event>eventQueue;	// Event queue
 		map<Packet,int>rcdFlowID;			// Flow ID of a packet
 		vector< vector<Entry> > allEntry;	// Flow entries of some flows
 		vector<Event>cumQue;			// Cumulated event queue
-		map<int,PrevHop>prevHop;		// Previous hop
 		map<Packet,int>aliveFlow;		// Number of alive flow currently in the network
 
 		// New added variable
@@ -59,21 +55,17 @@ class Fattree{
 		bool legalAddr(IP);				// Check if address is legal
 		void wirelessSP(void);			// Pre-process wireless shortest path
 		bool rule(int,vector<Entry>,Entry&);	// Extract rule from flow path
-		int pathInit(Packet,map<int,int>&);		// Initialize the prev array with -1
 		bool wired(int,Packet,vector<Entry>&,int);		// Wired policy
 		bool wireless(int,Packet,vector<Entry>&,int);	// Wireless policy
 		double vecdot(double[],double[],double[],double[]);	// Calculate vector dot
 		double vecdis(double[],double[],double[],double[]);	// Calculate vector distance
 		void updateTCAM(int,int);		// Remove expired entries
-		void recrdPrev(Event,Event);	// Record previous hop information
-		void modCap(int,int,double);	// Release capacity of previous hop
-		bool blockFlow(Event,Event);	// Check if capacity is enough or not
-		void resumeFlow(int,int);		// Resume blocked flow
 		int wiredHop(Packet);			// Calculate hops if using wired path
 		int wirelessHop(Packet);		// Calculate hops if using wireless path
 		void begTransmission(double,Packet);	// Called when transmission starts
 		void endTransmission(double,Packet);	// Called when transmission finishes
 		bool isTCAMfull(const vector<Entry>& nodes, bool isWired);	// Test if TCAM is "Full"
+		void modifyCap(vector<Entry>&, double, bool);	// Modify capacity of wired/wireless path
 
 		// Metric
 		int metric_flowSetupRequest;

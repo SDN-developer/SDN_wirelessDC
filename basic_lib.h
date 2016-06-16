@@ -16,7 +16,6 @@
 #define myMax(a,b) ((a)>(b)?(a):(b))
 #define myMin(a,b) ((a)<(b)?(a):(b))
 #define myDis(x1,y1,x2,y2) sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))
-#define INF (int)1e9
 using namespace std;
 typedef struct{
 	int id;

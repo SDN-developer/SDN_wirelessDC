@@ -153,12 +153,14 @@ void Fattree::controller(Event ctrEvt){
 
 		// LARGE FLOW!!!!!!
 		if(pkt.getDataRate() >= 0.125){
+//fprintf(stderr, "Large flow, wired only\n");
 
 			// You MUST use wired :)
 			temp = ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay;
 			if(wired(nid, pkt, vent, temp)){
 
-				// TODO: reserve capacity
+				// Reserve capacity
+				modifyCap(vent, -pkt.getDataRate(), false);
 
 				// For each wired rule entry
 				cumulatedDelay = 0;
@@ -205,20 +207,25 @@ void Fattree::controller(Event ctrEvt){
 
 			// Wireless CAP
 			if(wireless(nid, pkt, vent, temp)){
+//fprintf(stderr, "Wireless capacity is enough:");
 
 				// Copy for later use
 				copyVENT = vent;
 
 				// Wireless TCAM
 				if(isTCAMfull(vent, false)){
+//fprintf(stderr, " but TCAM is full:");
 
 					// Wired CAP
 					if(wired(nid, pkt, vent, temp)){
+//fprintf(stderr, " wired capacity is enough:");
 
 						// Wired TCAM
 						if(!isTCAMfull(vent, true)){
+//fprintf(stderr, " and TCAM is ok, go wired\n");
 
-							// TODO: reserve capacity
+							// Reserve capacity
+							modifyCap(vent, -pkt.getDataRate(), false);
 
 							// For each wired rule entry
 							cumulatedDelay = 0;
@@ -245,10 +252,16 @@ void Fattree::controller(Event ctrEvt){
 								ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
 							continue;
 						}
+//else
+//fprintf(stderr, " but TCAM of wired is not enough");
 					}
+//else
+//fprintf(stderr, " but capacity of wired is not enough");
 				}
+//fprintf(stderr, " go wireless\n");
 
-				// TODO: reserve capacity
+				// Reserve capacity
+				modifyCap(copyVENT, -pkt.getDataRate(), true);
 
 				// For each wireless rule entry
 				cumulatedDelay = 0;
@@ -277,8 +290,10 @@ void Fattree::controller(Event ctrEvt){
 
 			// Wired CAP
 			else if(wired(nid, pkt, vent, temp)){
+//fprintf(stderr, "Wireless capacity is not enough, go wired\n");
 
-				// TODO: reserve capacity
+				// Reserve capacity
+				modifyCap(vent, -pkt.getDataRate(), false);
 
 				// For each wired rule entry
 				cumulatedDelay = 0;
@@ -320,20 +335,25 @@ void Fattree::controller(Event ctrEvt){
 		
 			// Wired CAP
 			if(wired(nid, pkt, vent, temp)){
+//fprintf(stderr, "Wired capacity is enough:");
 
 				// Copy for later use
 				copyVENT = vent;
 
 				// Wired TCAM
 				if(isTCAMfull(vent, true)){
+//fprintf(stderr, " but TCAM is full:");
 
 					// Wireless CAP
 					if(wireless(nid, pkt, vent, temp)){
+//fprintf(stderr, " wireless capacity is enough:");
 
 						// Wireless TCAM
 						if(!isTCAMfull(vent, false)){
+//fprintf(stderr, " and TCAM is ok, go wireless\n");
 
-							// TODO: reserve capacity
+							// Reserve capacity
+							modifyCap(vent, -pkt.getDataRate(), true);
 
 							// For each wireless rule entry
 							cumulatedDelay = 0;
@@ -360,10 +380,16 @@ void Fattree::controller(Event ctrEvt){
 								ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
 							continue;
 						}
+//else
+//fprintf(stderr, " but TCAM of wireless is not enough");
 					}
+//else
+//fprintf(stderr, " but capacity of wireless is not enough");
 				}
+//fprintf(stderr, " go wired\n");
 
-				// TODO: reserve capacity
+				// Reserve capacity
+				modifyCap(copyVENT, -pkt.getDataRate(), false);
 
 				// For each wired rule entry
 				cumulatedDelay = 0;
@@ -392,8 +418,10 @@ void Fattree::controller(Event ctrEvt){
 			
 			// Wireless CAP
 			else if(wireless(nid, pkt, vent, temp)){
+//fprintf(stderr, "Wired capacity is not enough, go wireless\n");
 
-				// TODO: reserve capacity
+				// Reserve capacity
+				modifyCap(vent, -pkt.getDataRate(), true);
 
 				// For each wireless rule entry
 				cumulatedDelay = 0;

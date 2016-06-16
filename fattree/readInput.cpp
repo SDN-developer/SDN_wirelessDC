@@ -16,15 +16,14 @@ void Fattree::readInput(void){
 
 	// Variables
 	int byte[4], srcPort, dstPort, protocol, seq, flowSize;
+	int hostID;
+	int firstPktSize;
+	int lastPktSize;
 	char charSrcIP[20], charDstIP[20];
 	double timeStamp, dataRate;
 	IP dstIP, srcIP;
 	Event evt;
 	Packet pkt;
-
-	int hostID;
-	int firstPktSize;
-	int lastPktSize;
 
 	// Packets (5-tuples and arrival time)
 	seq = 1;
