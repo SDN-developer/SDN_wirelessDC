@@ -23,6 +23,7 @@ class Switch: public Node{
 		MyLL TCAMinactive;
 		map<Packet,LLNODE*>TCAMmapA;
 		map<Packet,LLNODE*>TCAMmapI;
+		int TCAMSize;
 		map<int,int>flowLeaveTime;
 };
 #endif

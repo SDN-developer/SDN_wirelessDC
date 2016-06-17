@@ -28,7 +28,7 @@ class Entry{
 		// Get function
 		int getOutputPort(void);
 		int getPriority(void);
-		int getSID(void) const;
+		int getSID(void);
 		double getRate(void);
 		Packet getSample(void);
 		bool isMatch(Packet);

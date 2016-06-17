@@ -42,6 +42,7 @@ void Fattree::start(void){
 
 			// No operation
 			case EVENT_NOP:
+//printf("[%6.1lf] No operation.\n", evt.getTimeStamp());
 				break;
 
 			// Check if flow transmission done
@@ -75,8 +76,8 @@ void Fattree::start(void){
 
 			// Cumulate until interval timeout
 			case EVENT_FLOWSETUP:
+//printf("[%6.1lf] Flow setup request: %d at %d.\n", evt.getTimeStamp(), evt.getPacket().getSequence(), evt.getID());
 				cumulate(evt);
-				// NOT COUNT HERE, SINCE DUMMY FLOW SETUP REQUEST WILL BE POSSIBLE
 //				metric_flowSetupRequest ++;
 				break;
 
@@ -95,7 +96,7 @@ void Fattree::start(void){
 			// Flow transmission done
 			case EVENT_DONE:
 //printf("[%6.1lf] %d flows arrives\n", evt.getTimeStamp(), arrive);
-				
+	
 				// Release capacity for this flow along the path
 				pkt = evt.getPacket();
 				vent = allEntry[ rcdFlowID[pkt] ];
@@ -128,17 +129,18 @@ void Fattree::start(void){
 					printf("Avg. flow completion time: %.3lf\n", metric_avgFlowCompleteTime/totFlow);
 					printf("Wireless:Wired = %d:%d\n", numberOfWirelessFlow, numberOfWiredFlow);
 					printf("Replacement %d / %d / %d\n", ruleReplacementCore, ruleReplacementAggr, ruleReplacementEdge);
+				}
 /*
 					printf("%d %d %.3lf %d %d %d %d %d\n", metric_flowSetupRequest, metric_ruleInstallCount,
 							metric_avgFlowCompleteTime/totFlow, numberOfWirelessFlow, numberOfWiredFlow,
 							ruleReplacementCore, ruleReplacementAggr, ruleReplacementEdge);
 */
-				}
+
 				break;
 
 			// Unknown
 			case EVENT_UNKNOWN:
-				printf("Error: unknown operation found.\n");
+//				printf("Error: unknown operation found.\n");
 				break;
 		}
 	}

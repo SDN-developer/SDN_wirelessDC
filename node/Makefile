@@ -8,4 +8,3 @@ setFunction:
 
 getFunction:
 	g++ -c getFunction.cpp
-

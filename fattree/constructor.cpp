@@ -54,6 +54,7 @@ Fattree::Fattree(int k){
 		sw[now] = new Core(now);
 		ip.setIP(10, pod, i/(pod/2)+1, i%(pod/2)+1);
 		sw[now]->setIP(ip);
+		sw[now]->TCAMSize = MAX_TCAM_ENTRY;
 		node[now] = sw[now];
 		now++;
 	}
@@ -63,6 +64,7 @@ Fattree::Fattree(int k){
 		sw[now] = new Aggregate(now);
 		ip.setIP(10, i/(pod/2), i%(pod/2)+(pod/2), 1);
 		sw[now]->setIP(ip);
+		sw[now]->TCAMSize = MAX_TCAM_ENTRY;
 		node[now] = sw[now];
 		now++;
 	}
@@ -72,6 +74,7 @@ Fattree::Fattree(int k){
 		sw[now] = new Edge(now);
 		ip.setIP(10, i/(pod/2), i%(pod/2), 1);
 		sw[now]->setIP(ip);
+		sw[now]->TCAMSize = MAX_TCAM_ENTRY;
 		node[now] = sw[now];
 
 		// Position X, Y
@@ -168,9 +171,6 @@ Fattree::Fattree(int k){
 			tlist.clear();
 		}
 	}
-
-	// Random seeds
-	srand((unsigned)time(NULL));
 
 	// Controller interval timeout event
 	Event evt;

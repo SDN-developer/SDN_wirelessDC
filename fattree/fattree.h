@@ -64,7 +64,6 @@ class Fattree{
 		int wirelessHop(Packet);		// Calculate hops if using wireless path
 		void begTransmission(double,Packet);	// Called when transmission starts
 		void endTransmission(double,Packet);	// Called when transmission finishes
-		bool isTCAMfull(const vector<Entry>& nodes, bool isWired);	// Test if TCAM is "Full"
 		void modifyCap(vector<Entry>&, double, bool);	// Modify capacity of wired/wireless path
 
 		// Metric

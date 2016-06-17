@@ -1,4 +1,4 @@
-all: constructor controller readInput install start rule getFunction wired legalAddr cumulate vecdot vecdis wirelessSP wireless updateTCAM hops begTransmission endTransmission isTCAMfull modifyCap
+all: constructor controller readInput install start rule getFunction wired legalAddr cumulate vecdot vecdis wirelessSP wireless updateTCAM hops begTransmission endTransmission modifyCap
 
 constructor:
 	g++ -c constructor.cpp
@@ -53,9 +53,6 @@ begTransmission:
 
 endTransmission:
 	g++ -c endTransmission.cpp
-
-isTCAMfull:
-	g++ -c isTCAMfull.cpp
 
 modifyCap:
 	g++ -c modifyCap.cpp

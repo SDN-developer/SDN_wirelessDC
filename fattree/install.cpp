@@ -38,7 +38,7 @@ void Fattree::install(Event evt){
 	}
 
 	// If TCAM is full
-	if(sw[nid]->TCAMactive.size() + sw[nid]->TCAMinactive.size() >= MAX_TCAM_ENTRY){
+	if(sw[nid]->TCAMactive.size() + sw[nid]->TCAMinactive.size() >= sw[nid]->TCAMSize){
 
 		// Inactive TCAM first
 		if(sw[nid]->TCAMinactive.size() > 0) {

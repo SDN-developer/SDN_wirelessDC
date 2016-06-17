@@ -11,7 +11,7 @@ int Entry::getOutputPort(void){
 int Entry::getPriority(void){
 	return priority;
 }
-int Entry::getSID(void) const{
+int Entry::getSID(void){
 	return this->sid;
 }
 double Entry::getRate(void){
