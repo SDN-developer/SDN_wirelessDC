@@ -42,6 +42,8 @@ void Fattree::install(Event evt){
 
 		// Inactive TCAM first
 		if(sw[nid]->TCAMinactive.size() > 0) {
+
+			// Remove from TCAM
 			tmpPkt = sw[nid]->TCAMinactive.front().getSample();
 			sw[nid]->TCAMmapI.erase(tmpPkt);
 			sw[nid]->TCAMinactive.pop_front();
@@ -57,6 +59,8 @@ void Fattree::install(Event evt){
 
 		// Active TCAM
 		else {
+
+			// Remove from TCAM
 			tmpPkt = sw[nid]->TCAMactive.front().getSample();
 			sw[nid]->TCAMmapA.erase(tmpPkt);
 			sw[nid]->TCAMactive.pop_front();

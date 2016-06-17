@@ -25,6 +25,9 @@ void Fattree::start(void){
 
 	// Statistic information
 	int prevPerCent = -1, perCent;
+	int numberOfWiredFlow = 0;
+	int numberOfWirelessFlow = 0;
+	int nowFlowID;
 	arrive = 0;
 
 	// Event queue
@@ -93,15 +96,19 @@ void Fattree::start(void){
 			// Flow transmission done
 			case EVENT_DONE:
 //printf("[%6.1lf] %d flows arrives\n", evt.getTimeStamp(), arrive);
-
+				
 				// Release capacity for this flow along the path
 				pkt = evt.getPacket();
 				vent = allEntry[ rcdFlowID[pkt] ];
-				modifyCap(vent, pkt.getDataRate());
-				
+				modifyCap(vent, pkt.getDataRate(), vent[0].isWireless());
+
 				// End transmission: 
 				// Change active rule to inactive if all flows of current header is done
 				endTransmission(evt.getTimeStamp(), evt.getPacket());
+
+				// Update number of wired/wireless path
+				if(vent[0].isWireless()) numberOfWirelessFlow++;
+				else numberOfWiredFlow++;
 
 				// Percentage
 				arrive ++;
@@ -120,9 +127,13 @@ void Fattree::start(void){
 					printf("# of flow setup request: %d\n", metric_flowSetupRequest);
 					printf("# of installed rules: %d\n", metric_ruleInstallCount);
 					printf("Avg. flow completion time: %.3lf\n", metric_avgFlowCompleteTime/totFlow);
-					printf("Replacement: %d / %d / %d\n", ruleReplacementCore, ruleReplacementAggr, ruleReplacementEdge);
-/*					printf("%d %d %.3lf %d %d %d\n", metric_flowSetupRequest, metric_ruleInstallCount, 
-							metric_avgFlowCompleteTime/totFlow, ruleReplacementCore, ruleReplacementAggr, ruleReplacementEdge);*/
+					printf("Wireless:Wired = %d:%d\n", numberOfWirelessFlow, numberOfWiredFlow);
+					printf("Replacement %d / %d / %d\n", ruleReplacementCore, ruleReplacementAggr, ruleReplacementEdge);
+/*
+					printf("%d %d %.3lf %d %d %d %d %d\n", metric_flowSetupRequest, metric_ruleInstallCount,
+							metric_avgFlowCompleteTime/totFlow, numberOfWirelessFlow, numberOfWiredFlow,
+							ruleReplacementCore, ruleReplacementAggr, ruleReplacementEdge);
+*/
 				}
 				break;
 

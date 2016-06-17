@@ -55,15 +55,16 @@ class Fattree{
 		bool legalAddr(IP);				// Check if address is legal
 		void wirelessSP(void);			// Pre-process wireless shortest path
 		bool rule(int,vector<Entry>,Entry&);	// Extract rule from flow path
-		int pathInit(Packet,map<int,int>&);		// Initialize the prev array with -1
 		bool wired(int,Packet,vector<Entry>&,int);		// Wired policy
 		bool wireless(int,Packet,vector<Entry>&,int);	// Wireless policy
 		double vecdot(double[],double[],double[],double[]);	// Calculate vector dot
 		double vecdis(double[],double[],double[],double[]);	// Calculate vector distance
 		void updateTCAM(int,int);		// Remove expired entries
+		int wiredHop(Packet);			// Calculate hops if using wired path
+		int wirelessHop(Packet);		// Calculate hops if using wireless path
 		void begTransmission(double,Packet);	// Called when transmission starts
 		void endTransmission(double,Packet);	// Called when transmission finishes
-		void modifyCap(vector<Entry>&, double);	// Modify capacity of wired path
+		void modifyCap(vector<Entry>&, double, bool);	// Modify capacity of wired/wireless path
 
 		// Metric
 		int metric_flowSetupRequest;
