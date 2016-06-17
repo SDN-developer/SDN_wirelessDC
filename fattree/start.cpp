@@ -17,8 +17,8 @@ void Fattree::start(void){
 
 	// Until all event finished
 	int arrive;
-	int curTimeStamp;
-	int compTimeStamp;
+	double curTimeStamp;
+	double compTimeStamp;
 	Packet pkt;
 	Event evt, next;
 	vector<Entry>vent;
