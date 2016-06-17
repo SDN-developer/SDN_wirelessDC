@@ -28,12 +28,12 @@ void Fattree::controller(Event ctrEvt){
 	vector<Entry>vent;
 	bool hasHandle = false;
 
-	int cumulatedDelay;
 	int lastPacketSize;
 	int flowSize;
 	int curSwitchID;
 	int nowHeaderID;
 	double dataRate;
+	double cumulatedDelay;
 
 	// Classify events
 	for(int i = 0; i < cumQue.size(); i++){

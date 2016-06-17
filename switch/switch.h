@@ -24,6 +24,6 @@ class Switch: public Node{
 		map<Packet,LLNODE*>TCAMmapA;
 		map<Packet,LLNODE*>TCAMmapI;
 		int TCAMSize;
-		map<int,int>flowLeaveTime;
+		map<int,double>flowLeaveTime;
 };
 #endif

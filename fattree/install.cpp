@@ -15,8 +15,8 @@
 void Fattree::install(Event evt){
 
 	// Variables
-	int ts = evt.getTimeStamp();
 	int nid = evt.getID();
+	double ts = evt.getTimeStamp();
 	Entry ent = evt.getEntry();
 	Packet pkt = evt.getPacket();
 	Packet tmpPkt;

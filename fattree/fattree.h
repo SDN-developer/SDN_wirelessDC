@@ -46,7 +46,7 @@ class Fattree{
 		// New added variable
 		int totFlow;					// Record total number of flows
 		map<int, vector<int> >headerList;	// Record flowID for the same header
-		map<int, int>flowCompTime;		// Record flow completion time of flowID
+		map<int, double>flowCompTime;		// Record flow completion time of flowID
 
 		// Private method
 		void controller(Event);			// Handles a batch of flow setup requests
