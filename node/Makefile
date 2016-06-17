@@ -1,4 +1,4 @@
-all: constructor setFunction getFunction forward
+all: constructor setFunction getFunction
 
 constructor:
 	g++ -c constructor.cpp
@@ -8,6 +8,3 @@ setFunction:
 
 getFunction:
 	g++ -c getFunction.cpp
-
-forward:
-	g++ -c forward.cpp

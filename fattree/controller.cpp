@@ -9,7 +9,6 @@
 #include "../fattree/fattree.h"
 #include "../event/event.h"
 #include "../event/eventType.h"
-#include "../mysort/mysort.h"
 
 // Controller
 void Fattree::controller(Event ctrEvt){
@@ -27,9 +26,7 @@ void Fattree::controller(Event ctrEvt){
 	Entry ent;
 	vector<Event>flowSetupEvent;
 	vector<Entry>vent;
-	vector<Entry>copyVENT;
 	bool hasHandle = false;
-	int k;
 
 	int cumulatedDelay;
 	int lastPacketSize;
@@ -61,7 +58,14 @@ void Fattree::controller(Event ctrEvt){
 				nowHeaderID = rcdFlowID[pkt];
 				vent.clear();
 
+				// It's a repeated flow with new flowID
+				if(pkt.getSequence() != -1){
+					fprintf(stderr, "[Error] Currently we do not handle repeated flow.\n");
+					exit(1);
+				}
+
 				// For all flow ID of the current header
+				// Note: now the size of list is always 1 (unique new flow)
 				bool found = false;
 				for(int j = 0; j < (int)headerList[nowHeaderID].size(); j++){
 					nowFlowID = headerList[nowHeaderID][j];
@@ -84,14 +88,11 @@ void Fattree::controller(Event ctrEvt){
 				// At least one flow with this header passes through this switch
 				if(found){
 
-					// Increment flow setup request count
-					metric_flowSetupRequest ++;
-
-					// Extract original entry
+					// Rule needed
 					if(rule(nid, allEntry[nowHeaderID], ent)){
 						ent.setExpire(ctrEvt.getTimeStamp() + flowSetupDelay + ENTRY_EXPIRE_TIME);
 
-						// Install the new entry
+						// Switch side install rule
 						ret.setEventType(EVENT_INSTALL);
 						ret.setTimeStamp(ctrEvt.getTimeStamp() + flowSetupDelay);
 						ret.setID(nid);
@@ -99,11 +100,10 @@ void Fattree::controller(Event ctrEvt){
 						ret.setEntry(ent);
 						eventQueue.push(ret);
 					}
-
 					// Rule not found
 					else{
-						/* Maybe it's caused by rule deletion of starting edge policy? */
-						fprintf(stderr, "Error: extract original flow entry failed.\n");
+						/* This may cause by rule deletion of starting edge policy.*/
+						fprintf(stderr, "Rule extract failed!!!\n");
 					}
 				}
 			}
@@ -123,10 +123,6 @@ void Fattree::controller(Event ctrEvt){
 	if(((int)cumQue.size()) > 0) hasHandle = true;
 	cumQue.clear();
 
-	// Sort with the largest gap between wired & wireless
-	mySort msrt(this);
-	sort(flowSetupEvent.begin(), flowSetupEvent.end(), msrt);
-
 	// Currently, all flow setup apply wired policy
 	for(int j = 0; j < flowSetupEvent.size(); j++){
 
@@ -140,7 +136,7 @@ void Fattree::controller(Event ctrEvt){
 		flowSize = pkt.getFlowSize();
 		dataRate = pkt.getDataRate();
 		lastPacketSize = (flowSize % PKT_SIZE) ? (flowSize % PKT_SIZE) : PKT_SIZE;
-	
+
 		// Assign flow ID
 		nowHeaderID = flowIDCount ++;
 		rcdFlowID[pkt] = nowHeaderID;
@@ -148,320 +144,55 @@ void Fattree::controller(Event ctrEvt){
 		// Record flow ID for the current header
 		headerList[nowHeaderID].push_back(pkt.getSequence());
 
-		// Clear entry
-		vent.clear();
+		// Wired policy only
+		temp = ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay;
+		if(wired(nid, pkt, vent, temp)){
 
-		// LARGE FLOW!!!!!!
-		if(pkt.getDataRate() >= 0.125){
-//fprintf(stderr, "Large flow, wired only\n");
+			// Reserve capacity
+			modifyCap(vent, -pkt.getDataRate());
 
-			// You MUST use wired :)
-			temp = ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay;
-			if(wired(nid, pkt, vent, temp)){
+			// For each wired rule entry
+			cumulatedDelay = 0;
+			for(int i = 0; i < vent.size(); i++){
 
-				// Reserve capacity
-				modifyCap(vent, -pkt.getDataRate(), false);
-
-				// For each wired rule entry
-				cumulatedDelay = 0;
-				for(int i = 0; i < vent.size(); i++){
-
-					// Record the finish time for this flow at current switch
-					sw[vent[i].getSID()]->flowLeaveTime[pkt.getSequence()] = 
-						ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-					cumulatedDelay += lastPacketSize/dataRate;
-
-					// Install
-					ret.setEventType(EVENT_INSTALL);
-					ret.setTimeStamp(ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay);
-					ret.setID(vent[i].getSID());
-					ret.setPacket(pkt);
-					ret.setEntry(vent[i]);
-					eventQueue.push(ret);
-				}
-
-				// Update flow completion time (at host)
-				flowCompTime[pkt.getSequence()] = 
+				// Record the finish time for this flow at current switch
+				sw[vent[i].getSID()]->flowLeaveTime[pkt.getSequence()] = 
 					ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
+				cumulatedDelay += lastPacketSize/dataRate;
 
-				// Record inserted entries
-				allEntry.push_back(vent);
-
-				// Clear Entry
-				vent.clear();
+				// Switch side event
+				ret.setEventType(EVENT_INSTALL);
+				ret.setTimeStamp(ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay);
+				ret.setID(vent[i].getSID());
+				ret.setPacket(pkt);
+				ret.setEntry(vent[i]);
+				eventQueue.push(ret);
 			}
 
-			// What?? No wired path!?
-			else{
-				fprintf(stderr, "Error: %s to %s: ", pkt.getSrcIP().fullIP.c_str(), pkt.getDstIP().fullIP.c_str());
-				fprintf(stderr, "No such WIRED path exists.\n");
-			}
-			continue;
-		}
-
-		// Wireless seems better
-		if(wiredHop(pkt) > wirelessHop(pkt)){
-
-			// Wireless policy first, then wired policy
-			temp = ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay;
-
-			// Wireless CAP
-			if(wireless(nid, pkt, vent, temp)){
-//fprintf(stderr, "Wireless capacity is enough:");
-
-				// Copy for later use
-				copyVENT = vent;
-
-				// Wireless TCAM
-				if(isTCAMfull(vent, false)){
-//fprintf(stderr, " but TCAM is full:");
-
-					// Wired CAP
-					if(wired(nid, pkt, vent, temp)){
-//fprintf(stderr, " wired capacity is enough:");
-
-						// Wired TCAM
-						if(!isTCAMfull(vent, true)){
-//fprintf(stderr, " and TCAM is ok, go wired\n");
-
-							// Reserve capacity
-							modifyCap(vent, -pkt.getDataRate(), false);
-
-							// For each wired rule entry
-							cumulatedDelay = 0;
-							for(int i = 0; i < vent.size(); i++){
-
-								// Record the finish time for this flow at current switch
-								sw[vent[i].getSID()]->flowLeaveTime[pkt.getSequence()] = 
-									ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-								cumulatedDelay += lastPacketSize/dataRate;
-
-								// Switch side event
-								ret.setEventType(EVENT_INSTALL);
-								ret.setTimeStamp(ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay);
-								ret.setID(vent[i].getSID());
-								ret.setPacket(pkt);
-								ret.setEntry(vent[i]);
-								eventQueue.push(ret);
-							}
-							// Record inserted entries
-							allEntry.push_back(vent);
-
-							// Update flow completion time (at host)
-							flowCompTime[pkt.getSequence()] = 
-								ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-							continue;
-						}
-//else
-//fprintf(stderr, " but TCAM of wired is not enough");
-					}
-//else
-//fprintf(stderr, " but capacity of wired is not enough");
-				}
-//fprintf(stderr, " go wireless\n");
-
-				// Reserve capacity
-				modifyCap(copyVENT, -pkt.getDataRate(), true);
-
-				// For each wireless rule entry
-				cumulatedDelay = 0;
-				for(int i = 0; i < copyVENT.size(); i++){
-
-					// Record the finish time for this flow at current switch
-					sw[copyVENT[i].getSID()]->flowLeaveTime[pkt.getSequence()] = 
-						ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-					cumulatedDelay += lastPacketSize/dataRate;
-
-					// Switch side event
-					ret.setEventType(EVENT_INSTALL);
-					ret.setTimeStamp(ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay);
-					ret.setID(copyVENT[i].getSID());
-					ret.setPacket(pkt);
-					ret.setEntry(copyVENT[i]);
-					eventQueue.push(ret);
-				}
-				// Record inserted entries
-				allEntry.push_back(copyVENT);
-
-				// Update flow completion time (at host)
-				flowCompTime[pkt.getSequence()] = 
-					ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-			}
-
-			// Wired CAP
-			else if(wired(nid, pkt, vent, temp)){
-//fprintf(stderr, "Wireless capacity is not enough, go wired\n");
-
-				// Reserve capacity
-				modifyCap(vent, -pkt.getDataRate(), false);
-
-				// For each wired rule entry
-				cumulatedDelay = 0;
-				for(int i = 0; i < vent.size(); i++){
-
-					// Record the finish time for this flow at current switch
-					sw[vent[i].getSID()]->flowLeaveTime[pkt.getSequence()] = 
-						ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-					cumulatedDelay += lastPacketSize/dataRate;
-
-					// Switch side event
-					ret.setEventType(EVENT_INSTALL);
-					ret.setTimeStamp(ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay);
-					ret.setID(vent[i].getSID());
-					ret.setPacket(pkt);
-					ret.setEntry(vent[i]);
-					eventQueue.push(ret);
-				}
-				// Record inserted entries
-				allEntry.push_back(vent);
-
-				// Update flow completion time (at host)
-				flowCompTime[pkt.getSequence()] = 
-					ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-			}
-
-			// No such path exists
-			else{
-				fprintf(stderr, "Error: %s to %s: ", pkt.getSrcIP().fullIP.c_str(), pkt.getDstIP().fullIP.c_str());
-				fprintf(stderr, "No such path exists.\n");
-			}
-		}
-
-		// Wired seems better
-		else{
-
-			// Wired policy first, then wireless policy
-			temp = ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay;
-		
-			// Wired CAP
-			if(wired(nid, pkt, vent, temp)){
-//fprintf(stderr, "Wired capacity is enough:");
-
-				// Copy for later use
-				copyVENT = vent;
-
-				// Wired TCAM
-				if(isTCAMfull(vent, true)){
-//fprintf(stderr, " but TCAM is full:");
-
-					// Wireless CAP
-					if(wireless(nid, pkt, vent, temp)){
-//fprintf(stderr, " wireless capacity is enough:");
-
-						// Wireless TCAM
-						if(!isTCAMfull(vent, false)){
-//fprintf(stderr, " and TCAM is ok, go wireless\n");
-
-							// Reserve capacity
-							modifyCap(vent, -pkt.getDataRate(), true);
-
-							// For each wireless rule entry
-							cumulatedDelay = 0;
-							for(int i = 0; i < vent.size(); i++){
-
-								// Record the finish time for this flow at current switch
-								sw[vent[i].getSID()]->flowLeaveTime[pkt.getSequence()] = 
-									ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-								cumulatedDelay += lastPacketSize/dataRate;
-
-								// Switch side event
-								ret.setEventType(EVENT_INSTALL);
-								ret.setTimeStamp(ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay);
-								ret.setID(vent[i].getSID());
-								ret.setPacket(pkt);
-								ret.setEntry(vent[i]);
-								eventQueue.push(ret);
-							}
-							// Record inserted entries
-							allEntry.push_back(vent);
-
-							// Update flow completion time (at host)
-							flowCompTime[pkt.getSequence()] = 
-								ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-							continue;
-						}
-//else
-//fprintf(stderr, " but TCAM of wireless is not enough");
-					}
-//else
-//fprintf(stderr, " but capacity of wireless is not enough");
-				}
-//fprintf(stderr, " go wired\n");
-
-				// Reserve capacity
-				modifyCap(copyVENT, -pkt.getDataRate(), false);
-
-				// For each wired rule entry
-				cumulatedDelay = 0;
-				for(int i = 0; i < copyVENT.size(); i++){
-
-					// Record the finish time for this flow at current switch
-					sw[copyVENT[i].getSID()]->flowLeaveTime[pkt.getSequence()] = 
-						ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-					cumulatedDelay += lastPacketSize/dataRate;
-
-					// Switch side event
-					ret.setEventType(EVENT_INSTALL);
-					ret.setTimeStamp(ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay);
-					ret.setID(copyVENT[i].getSID());
-					ret.setPacket(pkt);
-					ret.setEntry(copyVENT[i]);
-					eventQueue.push(ret);
-				}
-				// Record inserted entries
-				allEntry.push_back(copyVENT);
-
-				// Update flow completion time (at host)
-				flowCompTime[pkt.getSequence()] = 
-					ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-			}
+			// Update flow completion time (at host)
+			flowCompTime[pkt.getSequence()] = 
+				ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
 			
-			// Wireless CAP
-			else if(wireless(nid, pkt, vent, temp)){
-//fprintf(stderr, "Wired capacity is not enough, go wireless\n");
-
-				// Reserve capacity
-				modifyCap(vent, -pkt.getDataRate(), true);
-
-				// For each wireless rule entry
-				cumulatedDelay = 0;
-				for(int i = 0; i < vent.size(); i++){
-
-					// Record the finish time for this flow at current switch
-					sw[vent[i].getSID()]->flowLeaveTime[pkt.getSequence()] = 
-						ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-					cumulatedDelay += lastPacketSize/dataRate;
-
-					// Switch side event
-					ret.setEventType(EVENT_INSTALL);
-					ret.setTimeStamp(ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay);
-					ret.setID(vent[i].getSID());
-					ret.setPacket(pkt);
-					ret.setEntry(vent[i]);
-					eventQueue.push(ret);
-				}
-				// Record inserted entries
-				allEntry.push_back(vent);
-
-				// Update flow completion time (at host)
-				flowCompTime[pkt.getSequence()] = 
-					ctrEvt.getTimeStamp() + computePathDelay + flowSetupDelay + cumulatedDelay;
-			}
-
-			// No such path exists
-			else{
-				fprintf(stderr, "Error: %s to %s: ", pkt.getSrcIP().fullIP.c_str(), pkt.getDstIP().fullIP.c_str());
-				fprintf(stderr, "No such path exists.\n");
-				/* Here we may need to handle such situation */
-			}
+			// Record inserted entries
+			allEntry.push_back(vent);
 		}
+
+		// No such path exists
+		else{
+			fprintf(stderr, "Error: %s to %s: ", pkt.getSrcIP().fullIP.c_str(), pkt.getDstIP().fullIP.c_str());
+			fprintf(stderr, "No such path exists.\n");
+			/* Here we may need to handle such situation */
+		}
+
+		// Clear Entry
+		vent.clear();
 	}
 
 	// DEBUG: if no event handled, stop
 	if(!eventQueue.size()) return;
 
 	// DEBUG log
-//if(hasHandle) printf("[%6.1lf] Controller: Waiting for next handle...\n", ctrEvt.getTimeStamp());
+	//if(hasHandle) printf("[%6.1lf] Controller: Waiting for next handle...\n", ctrEvt.getTimeStamp());
 
 	// The next timeout time
 	evt = ctrEvt;

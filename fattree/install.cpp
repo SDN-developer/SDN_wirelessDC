@@ -38,17 +38,16 @@ void Fattree::install(Event evt){
 	}
 
 	// If TCAM is full
-	if(sw[nid]->TCAMactive.size() + sw[nid]->TCAMinactive.size() >= MAX_TCAM_ENTRY){
+	if(sw[nid]->TCAMactive.size() + sw[nid]->TCAMinactive.size() >= sw[nid]->TCAMSize){
 
 		// Inactive TCAM first
 		if(sw[nid]->TCAMinactive.size() > 0) {
-
-			// Remove from TCAM
 			tmpPkt = sw[nid]->TCAMinactive.front().getSample();
 			sw[nid]->TCAMmapI.erase(tmpPkt);
 			sw[nid]->TCAMinactive.pop_front();
 
 			// Send flow setup request event for this rule
+			tmpPkt.setSequence(-1);
 			ret.setTimeStamp(evt.getTimeStamp() + TCAM_SEARCH_DELAY);
 			ret.setEventType(EVENT_FLOWSETUP);
 			ret.setPacket(tmpPkt);
@@ -58,13 +57,12 @@ void Fattree::install(Event evt){
 
 		// Active TCAM
 		else {
-
-			// Remove from TCAM
 			tmpPkt = sw[nid]->TCAMactive.front().getSample();
 			sw[nid]->TCAMmapA.erase(tmpPkt);
 			sw[nid]->TCAMactive.pop_front();
 
 			// Send flow setup request event for this rule
+			tmpPkt.setSequence(-1);
 			ret.setTimeStamp(evt.getTimeStamp() + TCAM_SEARCH_DELAY);
 			ret.setEventType(EVENT_FLOWSETUP);
 			ret.setPacket(tmpPkt);

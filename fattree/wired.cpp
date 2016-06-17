@@ -16,7 +16,7 @@ bool Fattree::wired(int nid, Packet pkt, vector<Entry>& vent, int timeStamp){
 	map<int, vector<int> >prevNode;
 	prevNode.clear();
 
-	// Enumerate all path
+	// Variables
 	int nowID;
 	int srcID = nid;
 	int dstID;
@@ -47,6 +47,7 @@ bool Fattree::wired(int nid, Packet pkt, vector<Entry>& vent, int timeStamp){
 				prevNode[dstID].push_back(nowID);
 			}
 		}
+
 	}
 
 	// Aggregate -> Core
@@ -66,6 +67,7 @@ bool Fattree::wired(int nid, Packet pkt, vector<Entry>& vent, int timeStamp){
 				}
 			}
 		}
+
 	}
 
 	// Core -> Aggregate
@@ -85,6 +87,7 @@ bool Fattree::wired(int nid, Packet pkt, vector<Entry>& vent, int timeStamp){
 				prevNode[dstID].push_back(nowID);
 			}
 		}
+
 	}
 
 	// Aggregate -> Edge

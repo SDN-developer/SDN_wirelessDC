@@ -32,7 +32,7 @@ void Fattree::begTransmission(double timeStamp, Packet pkt){
 					sw[nid]->TCAMinactive.remove(sw[nid]->TCAMmapI[pkt]);
 					sw[nid]->TCAMmapI.erase(pkt);
 
-					// Update timestamp & Install at the tail (LRU)
+					// Update timestamp &  Install at the tail (LRU)
 					ent.setExpire(timeStamp + INF);
 					sw[nid]->TCAMmapA[pkt] = sw[nid]->TCAMactive.push_back(ent);
 				}

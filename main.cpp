@@ -4,8 +4,11 @@
 #include "fattree/fattree.h"
 
 // Main
-int main(void)
+int main(int argc, char *argv[])
 {
+	// Random seed
+	srand((unsigned)atoi(argv[1]));
+
 	// Fat tree
 	Fattree myFatTree(SIZE_OF_K);
 
