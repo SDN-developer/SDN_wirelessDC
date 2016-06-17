@@ -30,12 +30,12 @@ void Fattree::controller(Event ctrEvt){
 	bool hasHandle = false;
 	int k;
 
-	int cumulatedDelay;
 	int lastPacketSize;
 	int flowSize;
 	int curSwitchID;
 	int nowHeaderID;
 	double dataRate;
+	double cumulatedDelay;
 
 	// Classify events
 	for(int i = 0; i < cumQue.size(); i++){
