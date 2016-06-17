@@ -15,9 +15,7 @@ class Node{
 		void setIP(IP);;
 		int getID(void);
 		IP getIP(void);
-		virtual Event forward(double,Packet);
 		vector<EDGE>link;
-		vector< pair<Event,Event> >blockEvt;	// Blocked event: due to lack of capacity
 	private:
 		int id;
 		IP ip;

@@ -61,6 +61,13 @@ void Fattree::controller(Event ctrEvt){
 				nowHeaderID = rcdFlowID[pkt];
 				vent.clear();
 
+				// It's a repeated flow with new flowID
+				// Currently we don't handle repeated flows
+				if(pkt.getSequence() != -1){
+					fprintf(stderr, "[Error] Currently we don't handle repeated flows\n");
+					exit(1);
+				}
+
 				// For all flow ID of the current header
 				bool found = false;
 				for(int j = 0; j < (int)headerList[nowHeaderID].size(); j++){
