@@ -88,6 +88,9 @@ void Fattree::controller(Event ctrEvt){
 				// At least one flow with this header passes through this switch
 				if(found){
 
+					// Increment flow setup request
+					metric_flowSetupRequest ++;
+
 					// Rule needed
 					if(rule(nid, allEntry[nowHeaderID], ent)){
 						ent.setExpire(ctrEvt.getTimeStamp() + flowSetupDelay + ENTRY_EXPIRE_TIME);
