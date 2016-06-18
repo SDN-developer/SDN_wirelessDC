@@ -207,7 +207,7 @@ void Fattree::controller(Event ctrEvt){
 		}
 
 		// Wireless seems better
-		if(wiredHop(pkt) > wirelessHop(pkt)){
+		if(wirelessHop(pkt) < 2){
 
 			// Wireless policy first, then wired policy
 			temp = ctrEvt.getTimeStamp() + flowSetupDelay + computePathDelay;
