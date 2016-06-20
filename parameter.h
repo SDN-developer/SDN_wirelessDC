@@ -8,7 +8,7 @@
 /******** Delays ********/
 #define TCAM_SEARCH_DELAY 28.5
 #define FLOW_SETUP_DELAY 1
-#define CONTROL_BATCH 500
+#define CONTROL_BATCH 1
 #define CONTROL_PATH_DELAY 0
 
 /******** Link ********/

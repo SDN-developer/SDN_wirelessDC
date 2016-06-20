@@ -26,6 +26,8 @@ void Fattree::controller(Event ctrEvt){
 	Entry ent;
 	vector<Event>flowSetupEvent;
 	vector<Entry>vent;
+	map<int,double>hasFlowSetupRequest;
+	map<int,double>::iterator mapItr;
 	bool hasHandle = false;
 
 	int lastPacketSize;
@@ -34,8 +36,10 @@ void Fattree::controller(Event ctrEvt){
 	int nowHeaderID;
 	double dataRate;
 	double cumulatedDelay;
+	int count = 0;
 
 	// Classify events
+	hasFlowSetupRequest.clear();
 	for(int i = 0; i < cumQue.size(); i++){
 		evt = cumQue[i];
 		nid = evt.getID();
@@ -73,16 +77,12 @@ void Fattree::controller(Event ctrEvt){
 					// Last packet already passed through this switch: skip
 					if(evt.getTimeStamp() >= sw[nid]->flowLeaveTime[nowFlowID]) continue;
 					found = true;
+					hasFlowSetupRequest[nowHeaderID] = evt.getTimeStamp();
 
-					// Update the flow leave time @ remaining switches along the path
-					for(int k = 0; k < (int)allEntry[nowHeaderID].size(); k++){
-						curSwitchID = allEntry[nowHeaderID][k].getSID();
-						if(evt.getTimeStamp() < sw[curSwitchID]->flowLeaveTime[nowFlowID])
-							sw[curSwitchID]->flowLeaveTime[nowFlowID] += (ctrEvt.getTimeStamp() - evt.getTimeStamp()) + flowSetupDelay;
-					}
+					
 
-					// Update the flow completion time
-					flowCompTime[nowFlowID] += (ctrEvt.getTimeStamp() - evt.getTimeStamp()) + flowSetupDelay;
+					/*if(nid==0)
+					printf("switch id: 0 , Flow ID: %d \n", nowFlowID);*/
 				}
 
 				// At least one flow with this header passes through this switch
@@ -125,7 +125,27 @@ void Fattree::controller(Event ctrEvt){
 	}
 	if(((int)cumQue.size()) > 0) hasHandle = true;
 	cumQue.clear();
-
+	
+	// Update the flow leave time @ remaining switches along the path
+	for(mapItr = hasFlowSetupRequest.begin(); mapItr != hasFlowSetupRequest.end(); mapItr++){
+		if(mapItr->second != 0.0){
+			nowHeaderID = mapItr->first;
+			nowFlowID = headerList[nowHeaderID][0];
+			for(int k = 0; k < (int)allEntry[nowHeaderID].size(); k++){
+				curSwitchID = allEntry[nowHeaderID][k].getSID();
+				if(mapItr->second < sw[curSwitchID]->flowLeaveTime[nowFlowID])
+					sw[curSwitchID]->flowLeaveTime[nowFlowID] += (ctrEvt.getTimeStamp() - mapItr->second) + flowSetupDelay;
+			}
+			flowCompTime[nowFlowID] += (ctrEvt.getTimeStamp() - mapItr->second) + flowSetupDelay;
+			
+			/*if(nowFlowID==47)
+			{printf("Switch id: %d, flow com time: %f \n", nid, flowCompTime[nowFlowID]);
+			count++;}*/
+		}
+	}
+	
+	/*if(count > 0)
+		printf("count: %d \n", count);*/
 	// Currently, all flow setup apply wired policy
 	for(int j = 0; j < flowSetupEvent.size(); j++){
 
