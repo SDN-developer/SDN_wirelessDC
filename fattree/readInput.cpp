@@ -67,6 +67,9 @@ void Fattree::readInput(void){
 
 		// Record flow arrival time
 		metric_flowArrivalTime[seq-1] = timeStamp;
+		
+		// Record last flow setup time 
+		lastflowSetupTime[seq-1] = 0.0;
 
 		// Begin transmission:
 		// Change inactive rule to active rule if it's the first flow of this header

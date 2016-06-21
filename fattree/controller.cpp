@@ -133,10 +133,24 @@ void Fattree::controller(Event ctrEvt){
 			nowFlowID = headerList[nowHeaderID][0];
 			for(int k = 0; k < (int)allEntry[nowHeaderID].size(); k++){
 				curSwitchID = allEntry[nowHeaderID][k].getSID();
-				if(mapItr->second < sw[curSwitchID]->flowLeaveTime[nowFlowID])
-					sw[curSwitchID]->flowLeaveTime[nowFlowID] += (ctrEvt.getTimeStamp() - mapItr->second) + flowSetupDelay;
+				if( mapItr->second - lastflowSetupTime[nowFlowID] >= flowSetupDelay)
+				{
+					if(mapItr->second < sw[curSwitchID]->flowLeaveTime[nowFlowID])
+						sw[curSwitchID]->flowLeaveTime[nowFlowID] += flowSetupDelay;
+				}
+				else
+				{
+					if(mapItr->second < sw[curSwitchID]->flowLeaveTime[nowFlowID])
+						sw[curSwitchID]->flowLeaveTime[nowFlowID] += mapItr->second - lastflowSetupTime[nowFlowID];
+				}
 			}
-			flowCompTime[nowFlowID] += (ctrEvt.getTimeStamp() - mapItr->second) + flowSetupDelay;
+			if( mapItr->second - lastflowSetupTime[nowFlowID] >= flowSetupDelay)
+				flowCompTime[nowFlowID] += flowSetupDelay;
+			else
+				flowCompTime[nowFlowID] += mapItr->second - lastflowSetupTime[nowFlowID];
+			
+			//Update last flow setup time
+			lastflowSetupTime[nowFlowID] = mapItr->second;
 			
 			/*if(nowFlowID==47)
 			{printf("Switch id: %d, flow com time: %f \n", nid, flowCompTime[nowFlowID]);
