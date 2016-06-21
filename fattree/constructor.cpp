@@ -116,11 +116,7 @@ Fattree::Fattree(int k){
 			node[dst]->link.push_back(etmp);
 		}
 
-	// Controller interval timeout event
-	Event evt;
-	evt.setEventType(EVENT_INTERVAL);
-	evt.setTimeStamp(CONTROL_BATCH);
-	eventQueue.push(evt);
+
 
 	// Metric
 	metric_flowSetupRequest = 0;

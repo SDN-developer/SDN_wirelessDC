@@ -75,13 +75,10 @@ void Fattree::start(void){
 			case EVENT_FLOWSETUP:
 //printf("[%6.1lf] Flow setup request: %d at %d.\n", evt.getTimeStamp(), evt.getPacket().getSequence(), evt.getID());
 				cumulate(evt);
+				controller(evt);
 //				metric_flowSetupRequest ++;
 				break;
 
-			// Interval timeout: handle batch of flow setup requests
-			case EVENT_INTERVAL:
-				controller(evt);
-				break;
 
 			// Install & forward
 			case EVENT_INSTALL:
